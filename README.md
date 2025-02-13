@@ -54,9 +54,9 @@ fn main() {
 [build badge]: https://github.com/cloverstd/weight-lru-rs/actions/workflows/main.yml/badge.svg
 [build status]: https://github.com/cloverstd/weight-lru-rs/actions/workflows/main.yml
 [codecov badge]: https://codecov.io/gh/cloverstd/weight-lru-rs/branch/master/graph/badge.svg
-[coverage status]: https://codecov.io/gh/jeromefroe/lru-rs
+[coverage status]: https://codecov.io/gh/cloverstd/weight-lru-rs
 [crates.io badge]: https://img.shields.io/crates/v/weight-lru.svg
-[crates.io package]: https://crates.io/crates/lru/
+[crates.io package]: https://crates.io/crates/weight-lru/
 [documentation]: https://docs.rs/weight-lru/
 [docs.rs badge]: https://docs.rs/weight-lru/badge.svg
 [docs.rs documentation]: https://docs.rs/weight-lru/
