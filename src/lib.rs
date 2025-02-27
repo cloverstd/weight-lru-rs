@@ -483,7 +483,6 @@ impl<K: Hash + Eq, V, S: BuildHasher> LruCache<K, V, S> {
         }
 
         if self.current_size + size.get() > self.cap().get() && self.current_size > 0 {
-
             // if the cache is full, remove the last entry so we can use it for the new key
             let old_key = KeyRef {
                 k: unsafe { &(*(*(*self.tail).prev).key.as_ptr()) },
@@ -1615,7 +1614,7 @@ impl<K: Hash + Eq, V, S: BuildHasher> LruCache<K, V, S> {
             };
             let old_node = self.map.remove(&old_key).unwrap();
             let node_ptr: *mut LruEntry<K, V> = old_node.as_ptr();
-            self.current_size -= unsafe {(*node_ptr).size.get()};
+            self.current_size -= unsafe { (*node_ptr).size.get() };
             self.detach(node_ptr);
             unsafe { Some(Box::from_raw(node_ptr)) }
         } else {
@@ -1632,7 +1631,7 @@ impl<K: Hash + Eq, V, S: BuildHasher> LruCache<K, V, S> {
             };
             let old_node = self.map.remove(&old_key).unwrap();
             let node_ptr: *mut LruEntry<K, V> = old_node.as_ptr();
-            self.current_size -= unsafe {(*node_ptr).size.get()};
+            self.current_size -= unsafe { (*node_ptr).size.get() };
             self.detach(node_ptr);
             unsafe { Some(Box::from_raw(node_ptr)) }
         } else {
