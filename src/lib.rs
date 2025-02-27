@@ -471,13 +471,18 @@ impl<K: Hash + Eq, V, S: BuildHasher> LruCache<K, V, S> {
         v: V,
         size: NonZeroUsize,
     ) -> (Option<(K, V)>, NonNull<LruEntry<K, V>>) {
-        if self.current_size + size.get() > self.cap().get() {
-            // if the cache is full, remove the last entry of cache until size entry can be accommodated.
-            let mut tail_size = self.tail_size();
-            while self.current_size + size.get() - tail_size > self.cap().get() {
-                let _ = self.pop_lru();
-                tail_size = self.tail_size();
+        // if the cache is full, remove the last entry of cache until size entry can be accommodated.
+        let mut tail_size = self.tail_size();
+        while self.current_size + size.get() - tail_size > self.cap().get() {
+            if self.current_size == 0 {
+                // allow overflow only one node
+                break;
             }
+            let _ = self.pop_lru();
+            tail_size = self.tail_size();
+        }
+
+        if self.current_size + size.get() > self.cap().get() && self.current_size > 0 {
 
             // if the cache is full, remove the last entry so we can use it for the new key
             let old_key = KeyRef {
@@ -1317,7 +1322,6 @@ impl<K: Hash + Eq, V, S: BuildHasher> LruCache<K, V, S> {
     /// ```
     pub fn pop_lru(&mut self) -> Option<(K, V)> {
         let node = self.remove_last()?;
-        self.current_size -= node.size.get();
         // N.B.: Can't destructure directly because of https://github.com/rust-lang/rust/issues/28536
         let node = *node;
         let LruEntry { key, val, .. } = node;
@@ -1346,7 +1350,6 @@ impl<K: Hash + Eq, V, S: BuildHasher> LruCache<K, V, S> {
     /// ```
     pub fn pop_mru(&mut self) -> Option<(K, V)> {
         let node = self.remove_first()?;
-        self.current_size -= node.size.get();
         // N.B.: Can't destructure directly because of https://github.com/rust-lang/rust/issues/28536
         let node = *node;
         let LruEntry { key, val, .. } = node;
@@ -1612,6 +1615,7 @@ impl<K: Hash + Eq, V, S: BuildHasher> LruCache<K, V, S> {
             };
             let old_node = self.map.remove(&old_key).unwrap();
             let node_ptr: *mut LruEntry<K, V> = old_node.as_ptr();
+            self.current_size -= unsafe {(*node_ptr).size.get()};
             self.detach(node_ptr);
             unsafe { Some(Box::from_raw(node_ptr)) }
         } else {
@@ -1628,6 +1632,7 @@ impl<K: Hash + Eq, V, S: BuildHasher> LruCache<K, V, S> {
             };
             let old_node = self.map.remove(&old_key).unwrap();
             let node_ptr: *mut LruEntry<K, V> = old_node.as_ptr();
+            self.current_size -= unsafe {(*node_ptr).size.get()};
             self.detach(node_ptr);
             unsafe { Some(Box::from_raw(node_ptr)) }
         } else {
@@ -3107,6 +3112,28 @@ mod tests {
         assert_eq!(cache.len(), 1);
         assert_eq!(cache.size(), 2);
         assert_opt_eq(cache.peek(&1), 2);
+    }
+
+    #[test]
+    fn test_overflow_node() {
+        let mut cache = LruCache::new(NonZeroUsize::new(3).unwrap());
+        cache.put(1, 1, NonZeroUsize::new(4).unwrap());
+        assert_eq!(cache.size(), 4);
+        assert_eq!(cache.len(), 1);
+        cache.remove_last();
+
+        cache.push(1, 1, NonZeroUsize::new(1).unwrap());
+        assert_eq!(cache.size(), 1);
+        assert_eq!(cache.len(), 1);
+        cache.push(2, 2, NonZeroUsize::new(1).unwrap());
+        cache.push(3, 3, NonZeroUsize::new(1).unwrap());
+        assert_eq!(cache.size(), 3);
+        assert_eq!(cache.len(), 3);
+
+        // overflow
+        cache.push(4, 4, NonZeroUsize::new(4).unwrap());
+        assert_eq!(cache.size(), 4);
+        assert_eq!(cache.len(), 1);
     }
 }
 
