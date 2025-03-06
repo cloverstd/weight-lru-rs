@@ -231,7 +231,7 @@ impl<K: Hash + Eq, V> LruCache<K, V> {
     /// let mut cache: LruCache<isize, &str> = LruCache::new(NonZeroUsize::new(10).unwrap());
     /// ```
     pub fn new(cap: NonZeroUsize) -> LruCache<K, V> {
-        LruCache::construct(cap, HashMap::with_capacity(cap.get()))
+        LruCache::construct(cap, HashMap::new())
     }
 
     /// Creates a new LRU Cache that never automatically evicts items.
@@ -262,10 +262,7 @@ impl<K: Hash + Eq, V, S: BuildHasher> LruCache<K, V, S> {
     /// let mut cache: LruCache<isize, &str> = LruCache::with_hasher(NonZeroUsize::new(10).unwrap(), s);
     /// ```
     pub fn with_hasher(cap: NonZeroUsize, hash_builder: S) -> LruCache<K, V, S> {
-        LruCache::construct(
-            cap,
-            HashMap::with_capacity_and_hasher(cap.into(), hash_builder),
-        )
+        LruCache::construct(cap, HashMap::with_hasher(hash_builder))
     }
 
     /// Creates a new LRU Cache that never automatically evicts items and

@@ -1,6 +1,6 @@
 [package]
 name = "weight-lru"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["cloverstd <cloverstd@gmail.com>"]
 categories = ["caching", "no-std"]
 description = "A LRU cache implementation"
